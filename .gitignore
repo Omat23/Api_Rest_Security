@@ -45,3 +45,5 @@ buildNumber.properties
 
 ##Confidential##
 .env
+.env.dev
+.env.prod
