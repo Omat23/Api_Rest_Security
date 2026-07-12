@@ -1,5 +1,6 @@
 package com.example.api_rest_security.controller;
 
+import com.example.api_rest_security.dtos.request.UserLoginRequestDto;
 import com.example.api_rest_security.dtos.request.UserRegisterRequestDto;
 import com.example.api_rest_security.dtos.response.UserResponseDto;
 import com.example.api_rest_security.service.AuthenticationService;
@@ -9,6 +10,9 @@ import lombok.AllArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +30,9 @@ public class AuthController {
     // autenticacion de sus metodos
     private final AuthenticationService authenticationService;
 
+    //Solicitamos un authenticationManager para poder autenticar las peticiones HTTP que lleguen al controlador de autenticacion
+    private final AuthenticationManager authenticationManager;
+
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto> register(
             @Valid // Indicamos que vamos a capturar las excepciones de validacion de campos en
@@ -39,6 +46,26 @@ public class AuthController {
 
         // Retornamos el usuario creado y un codigo de estado HTTP 201
         return new ResponseEntity<>(userResponseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @RequestBody //Solicitamos un objeto de tipo userLoginRequestDto que se debera enviar en formato JSON
+            UserLoginRequestDto userLoginRequestDto){
+
+        /*
+            Mandamos a llamar a nuestro authenticationManager para autenticar las credenciales enviadas
+            por parte del cliente mediante su metodo 'authenticate() donde instanciaremos un objeto de tipo
+            UsernamePasswordAuthenticationToken el cual envolvera los datos enviados del cliente y se los trasnfiere
+            al proveedor de autenticacion del AuthenticationManager. Si la autenticacion es correcta se devuelve un objeto
+            de tipo Authenticate con el usuario ya autenticado
+         */
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        userLoginRequestDto.getEmail(),
+                        userLoginRequestDto.getPassword())
+        );
+        return new ResponseEntity<>("Usuario autenticado con exito!", HttpStatus.OK);
     }
 
 }
