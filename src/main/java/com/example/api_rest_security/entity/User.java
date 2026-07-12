@@ -15,7 +15,7 @@ public class User {
 
     @Id //Marcamos el atributo como la clave primaria de la entidad
     @GeneratedValue(strategy = GenerationType.IDENTITY) //Indicamos que el valor de la clave primaria se generara automaticamente por la base de datos
-    private int id;
+    private Long id;
 
     @Column(nullable = false) //Indicamos que el atributo no puede ser nulo en la base de datos
     private String username;
