@@ -31,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return new CustomUserDetails(userJpaRepository.finByEmail(email)
+        return new CustomUserDetails(userJpaRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email)));
     }
 }

@@ -10,6 +10,6 @@ import java.util.Optional;
 //Extendemos de JpaRepository para poder usar los métodos de JPA y poder hacer consultas a la base de datos
 public interface UserJpaRepository extends JpaRepository<User, Long>{
 
-    Optional<User> finByEmail(String email);
+    Optional<User> findByEmail(String email);
 
 }
