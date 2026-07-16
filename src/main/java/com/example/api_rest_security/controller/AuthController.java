@@ -3,7 +3,9 @@ package com.example.api_rest_security.controller;
 import com.example.api_rest_security.dtos.request.UserLoginRequestDto;
 import com.example.api_rest_security.dtos.request.UserRegisterRequestDto;
 import com.example.api_rest_security.dtos.response.UserResponseDto;
+import com.example.api_rest_security.jwt.JwtService;
 import com.example.api_rest_security.service.AuthenticationService;
+import com.example.api_rest_security.service.CustomUserDetailsService;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -13,10 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController // Indicamos que la clase sera un controlador de una aplicacion web, y que los
                 // metodos de la clase seran manejadores de peticiones HTTP
@@ -32,6 +32,11 @@ public class AuthController {
 
     //Solicitamos un authenticationManager para poder autenticar las peticiones HTTP que lleguen al controlador de autenticacion
     private final AuthenticationManager authenticationManager;
+
+    //Inyectamos
+    private final CustomUserDetailsService customUserDetailsService;
+
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto> register(
@@ -54,18 +59,25 @@ public class AuthController {
             UserLoginRequestDto userLoginRequestDto){
 
         /*
-            Mandamos a llamar a nuestro authenticationManager para autenticar las credenciales enviadas
-            por parte del cliente mediante su metodo 'authenticate() donde instanciaremos un objeto de tipo
-            UsernamePasswordAuthenticationToken el cual envolvera los datos enviados del cliente y se los trasnfiere
-            al proveedor de autenticacion del AuthenticationManager. Si la autenticacion es correcta se devuelve un objeto
-            de tipo Authenticate con el usuario ya autenticado
+         * Mandamos a llamar a nuestro authenticationManager para autenticar las credenciales enviadas
+         * por parte del cliente mediante su metodo 'authenticate() donde instanciaremos un objeto de tipo
+         * UsernamePasswordAuthenticationToken el cual envolvera los datos enviados del cliente y se los trasnfiere
+         * al proveedor de autenticacion del AuthenticationManager. Si la autenticacion es correcta se devuelve un objeto
+         * de tipo Authenticate con el usuario ya autenticado.
          */
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         userLoginRequestDto.getEmail(),
-                        userLoginRequestDto.getPassword())
-        );
-        return new ResponseEntity<>("Usuario autenticado con exito!", HttpStatus.OK);
+                        userLoginRequestDto.getPassword()));
+
+        //Traemos el usuario autenticado de la base de datos
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(userLoginRequestDto.getEmail());
+
+        //Generamos el token con base al usuario autenticado
+        String token = jwtService.generateToken(userDetails);
+
+        //Regresamos el token junto con una respuesta 200 OK
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
 }
