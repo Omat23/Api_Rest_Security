@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,4 +46,33 @@ public class GlobalExceptionHandler {
         ), HttpStatus.BAD_REQUEST);
     }
 
+    //Handler para la captura de AuthenticationException (401 UNAUTHORIZED)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse<String>> handleAuthenticationException(AuthenticationException authenticationException){
+        /*
+            Retornamos una respuesta con un formato personalizado por la clase ErrorResponse,
+            dicho formato se genera a traves de la clase GenerateErrorResponse.
+         */
+        return new ResponseEntity<>(new GenerateErrorResponse<String>().generateErrorResponse(
+                "Acceso no autorizado", //Indicamos el mensaje describiendo el tipo de error
+                Map.of(HttpStatus.UNAUTHORIZED, HttpStatus.UNAUTHORIZED.value()), //Indicamos el codigo HTTP del error producido y su codigo numerico
+                "No puedes acceder a este recurso debido a que no estas autenticado", //Indicamos el mensaje describiendo la causa del error
+                LocalDateTime.now() //Enviamos la fecha actual del momento en que se produjo la excepcion
+        ),  HttpStatus.UNAUTHORIZED); //Regresamos el error HTTP resultante de esta excepcion
+    }
+
+    //Handler encargado de la captura de AccessDeniedException (403 FORDBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse<String>> handleAccessDeniedException(AccessDeniedException accessDeniedException){
+        /*
+            Retornamos una respuesta con un formato personalizado por la clase ErrorResponse,
+            dicho formato se genera a traves de la clase GenerateErrorResponse.
+         */
+        return new ResponseEntity<>(new GenerateErrorResponse<String>().generateErrorResponse(
+                "Acceso prohibido", //Indicamos el mensaje describiendo el tipo de error
+                Map.of(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.value()), //Indicamos el codigo HTTP del error producido y su codigo numerico
+                "No tienes los permisos necesarios para realizar esta accion", //Indicamos el mensaje describiendo la causa del error
+                LocalDateTime.now() //Enviamos la fecha actual del momento en que se produjo la excepcion
+        ),  HttpStatus.FORBIDDEN); //Regresamos el error HTTP resultante de esta excepcion
+    }
 }
