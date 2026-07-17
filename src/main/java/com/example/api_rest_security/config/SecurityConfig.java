@@ -1,5 +1,7 @@
 package com.example.api_rest_security.config;
 
+import com.example.api_rest_security.exceptions.authentication.CustomAccessDeniedHandler;
+import com.example.api_rest_security.exceptions.authentication.CustomAuthenticationEntryPoint;
 import com.example.api_rest_security.jwt.JwtAuthenticationFilter;
 import com.example.api_rest_security.service.CustomUserDetailsService;
 import lombok.AllArgsConstructor;
@@ -26,6 +28,10 @@ public class SecurityConfig {
 
     // Inyectamos nuestro filtro personalizado, en este caso el JwtAuthenticationFilter
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean // Marcamos el metodo como un bean que sera gestionado por Spring
     // Creamos el objeto Encoder para encriptar passwords
@@ -66,15 +72,23 @@ public class SecurityConfig {
                 })
 
                 // Añadimos nuestro filtro JWT justo antes del filtro UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                //Agregamos los filtros personalizados para capturar las excepciones de autenticacion (401, 403)
+                .exceptionHandling(exceptionHandler -> {
+                    exceptionHandler.authenticationEntryPoint(customAuthenticationEntryPoint);
+                    exceptionHandler.accessDeniedHandler(customAccessDeniedHandler);
+                });
 
         return httpSecurity.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(CustomUserDetailsService customUserDetailsService) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(customUserDetailsService);
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(customUserDetailsService);
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setHideUserNotFoundExceptions(false);
         return new ProviderManager(daoAuthenticationProvider);
     }
 }
